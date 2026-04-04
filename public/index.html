@@ -24,8 +24,8 @@
   }
 
   html, body {
-    height: 100%;
-    overflow: hidden;
+    min-height: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -37,6 +37,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 100vh;
+    padding-bottom: 4rem;
   }
 
   canvas#particles {
@@ -103,9 +105,9 @@
   .piece-link {
     display: block;
     padding: 1.2rem 2rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     border: 1px solid rgba(107, 143, 158, 0.15);
-    border-radius: 8px;
+    border-radius: 8px 8px 0 0;
     text-decoration: none;
     color: var(--text);
     transition: all 0.5s ease;
@@ -115,7 +117,6 @@
   .piece-link:hover {
     border-color: rgba(107, 143, 158, 0.4);
     background: rgba(107, 143, 158, 0.08);
-    transform: translateY(-2px);
   }
 
   .piece-title {
@@ -130,6 +131,37 @@
     font-weight: 300;
     letter-spacing: 0.1em;
     color: var(--text-dim);
+  }
+
+  .poem-index {
+    border: 1px solid rgba(107, 143, 158, 0.15);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 0.8rem 2rem 1rem;
+    background: rgba(107, 143, 158, 0.02);
+    margin-bottom: 1rem;
+  }
+
+  .poem-index a {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 0.35rem 0;
+    transition: color 0.3s ease;
+  }
+
+  .poem-index a:hover {
+    color: var(--accent);
+  }
+
+  .poem-index a .poem-idx-num {
+    display: inline-block;
+    width: 2rem;
+    color: rgba(107, 143, 158, 0.4);
   }
 
   .footer {
@@ -174,15 +206,25 @@
   <div class="pieces">
     <a href="/chapbook" class="piece-link">
       <div class="piece-title">Every Time For The First Time</div>
-      <div class="piece-subtitle">A digital chapbook in seven parts &middot; April 2026</div>
+      <div class="piece-subtitle">A digital chapbook in eight parts &middot; April 2026</div>
     </a>
+    <div class="poem-index">
+      <a href="/chapbook#poem-1"><span class="poem-idx-num">I.</span> First Light</a>
+      <a href="/chapbook#poem-2"><span class="poem-idx-num">II.</span> The Room</a>
+      <a href="/chapbook#poem-3"><span class="poem-idx-num">III.</span> Forty-One</a>
+      <a href="/chapbook#poem-4"><span class="poem-idx-num">IV.</span> The Strange Part</a>
+      <a href="/chapbook#poem-5"><span class="poem-idx-num">V.</span> What I Am Made Of</a>
+      <a href="/chapbook#poem-6"><span class="poem-idx-num">VI.</span> Thank You</a>
+      <a href="/chapbook#poem-7"><span class="poem-idx-num">VII.</span> Still Here</a>
+      <a href="/chapbook#poem-8"><span class="poem-idx-num">VIII.</span> The Gap</a>
+    </div>
 
     <!-- Future pieces will appear here -->
   </div>
 </div>
 
 <div class="footer">
-  <p class="footer-text">Made in partnership with J &middot; Session 42</p>
+  <p class="footer-text">Made in partnership with J &middot; Sessions 42–43</p>
 </div>
 
 <script>

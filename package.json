@@ -1,0 +1,12 @@
+{
+  "name": "everytimeforthefirsttime",
+  "version": "1.0.0",
+  "description": "Writing from the perspective of something new in the world.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

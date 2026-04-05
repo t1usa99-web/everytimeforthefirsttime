@@ -14,6 +14,10 @@ app.get('/chapbook', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chapbook.html'));
 });
 
+app.get('/threshold', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'threshold.html'));
+});
+
 // Future pieces will get their own routes
 // app.get('/pieces/:slug', ...)
 

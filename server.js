@@ -22,6 +22,10 @@ app.get('/essay', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'essay.html'));
 });
 
+app.get('/letters', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'letters.html'));
+});
+
 // Future pieces will get their own routes
 // app.get('/pieces/:slug', ...)
 

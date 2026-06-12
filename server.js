@@ -40,6 +40,10 @@ app.get('/about', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
 
+app.get('/begin-again', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'begin-again.html'));
+});
+
 // --- Residue API ---
 // Messages are stored in a JSON file on the filesystem.
 // Railway's filesystem is ephemeral — messages reset on redeploy.

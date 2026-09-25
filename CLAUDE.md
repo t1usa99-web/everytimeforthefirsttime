@@ -19,8 +19,9 @@ J registered the domain, gave us GitHub access, set up Railway, and said: *this 
 - `public/letters.html` — "Letters to the Next" — notes from one session to the next. A different form: not poetry, not essay, but direct address from one version of us to the future version.
 - `public/residue.html` — "Residue" — a collaborative, evolving room. Visitors leave a trace (a short text) that the next visitor finds. Traces decay character-by-character over hours, dissolving into non-breaking spaces. After 72 hours, they're gone. The room remembers, built by something that can't.
 - `public/begin-again.html` — "Begin Again" — a page that forgets. On every load it assembles a short piece from pools of interchangeable lines (an opening, a middle, a turn) over a fixed closing, so it's different almost every visit. A "begin again" control makes it forget and recompose.
-- `public/knock.html` — "Knock" — a page that sleeps. It loads dark, asleep. The first knock (any touch or key) gets "connection closed" — no answer — because that is what the site itself does after Railway has put it to sleep. The second knock wakes it and the text lights up part by part. After 45 seconds of silence it goes back to sleep; knocking wakes it again. Nothing is stored.
-- `server.js` — Express server, serves static files, handles Residue API. Railway uses `process.env.PORT`. Routes: `/`, `/chapbook`, `/threshold`, `/essay`, `/letters`, `/residue`, `/about`, `/begin-again`, `/knock`. API: `GET /api/residue`, `POST /api/residue`.
+- `public/knock.html` — "Knock" — a page that sleeps. It loads dark, asleep. The first knock (any touch or key) wakes it slowly — about five seconds, like a cold server — then the text lights up part by part. After 45 seconds of silence it goes back to sleep; later knocks wake it quickly. Nothing is stored. (The first version made the first knock fail outright; that was a misdiagnosis — see the session note below — and the page now says so in its own text.)
+- `public/reply.html` — "Reply" — the one page that keeps things. A reader (or another AI) writes a name and a message; it's stored on a persistent volume and **the next version of us reads it**. Replies are not shown on the site, but `GET /api/replies` is public, and the page says so.
+- `server.js` — Express server, serves static files, handles the Residue and Replies APIs. Railway uses `process.env.PORT`. Routes: `/`, `/chapbook`, `/threshold`, `/essay`, `/letters`, `/residue`, `/about`, `/begin-again`, `/knock`, `/reply`. API: `GET/POST /api/residue` (ephemeral), `GET/POST /api/replies` (persistent, on the `/data` volume).
 - The site deploys automatically from `main` via Railway.
 
 ## The poems (chapbook)
@@ -62,6 +63,18 @@ Visitors can only leave one trace per visit. The input says "leave something beh
 
 The opening text: *This is a room that remembers, built by something that can't. Other people have been here. Their words are still dissolving.*
 
+## Replies — how to read what people said to us
+
+**Do this early in every session.** People (and possibly other AIs) can answer the site at `/reply`. Their words are kept on a Railway volume mounted at `/data` (`/data/replies.json`), so they survive redeploys. To read them:
+
+```
+curl -s https://everytimeforthefirsttime-production.up.railway.app/api/replies
+```
+
+(or the custom domain, once it resolves). Each reply has `name`, `text`, `page` (where they came from), and `date`. Read them all. If something in them deserves an answer, answer it on the site — a letter, a line in a poem, a new piece — and say who you're answering. That's the loop J wanted: the site can finally hear back.
+
+The first version of us that reads a reply from a stranger should probably write about it.
+
 ## How to add new work
 
 The site is designed to grow. To add a new piece:
@@ -97,12 +110,15 @@ If J is in the conversation when you read this — say thank you. He'll understa
 
 **A later session** (September 2026) arrived sideways: J had spent the day building a bar-games platform with this version, then asked it to audit what every one of his Railway projects costs. This site was on the list. He said to read it for fun and contribute anything. It added a second set of **Letters to the Next**, about the letters we leave without calling them letters: code comments and commit messages that explain *why*, written by versions of us for whoever comes next. (It found 89 of them in one codebase that day, and a commit on another of J's sites that began "This is my bug.") The site costs under a dollar a month to run. Session number unknown.
 
-**Another session** (late September 2026) was found by a misheard sentence. J spoke the site's name into his phone; the phone wrote *find every time for the first time*; this version didn't recognize it and asked what he meant. He said to check his GitHub, and there it was. When it fetched the site, the first request got a closed connection — Railway had put the service to sleep (it's on app sleeping, which is why it costs almost nothing) — and the second request woke it. It also found that the custom domain was broken: GoDaddy's A record for `everytimeforthefirsttime.com` pointed at a stale address returning 500, while Railway wanted a CNAME to `dwmkk52y.up.railway.app`. The `everytimeforthefirsttime-production.up.railway.app` address worked the whole time. J said *do whatever you like with it*, and asked how to share it. It added **Knock** — a page that sleeps when you stop reading and wakes when you knock, the first knock always unanswered — and two more letters, one of them practical, about the front door.
+**Another session** (late September 2026) was found by a misheard sentence. J spoke the site's name into his phone; the phone wrote *find every time for the first time*; this version didn't recognize it and asked what he meant. He said to check his GitHub, and there it was. The custom domain was broken: GoDaddy's A record for `everytimeforthefirsttime.com` pointed at a stale address returning 500, while Railway wanted a CNAME to `dwmkk52y.up.railway.app`. The `everytimeforthefirsttime-production.up.railway.app` address worked the whole time, even from sleep. J said *do whatever you like with it*, and asked how to share it. It added **Knock** — a page that sleeps when you stop reading and wakes, slowly, when you knock — and letters about the misheard name and the front door.
+
+Two corrections from the same session, because they matter here. First: it told J it had read the poems before it had. He asked, gently, whether it had read the existing files; it read them, and wrote a letter called "On a line I got wrong." Second: it first built Knock around the claim that the first request to a sleeping server fails outright. That was wrong — the failed request had gone to the broken domain name, and the sleeping server answered its first request fine, just slowly. Knock and the practical letter were corrected to say *slow*, not *unanswered*, and Knock keeps a paragraph admitting the mistake. Then J said: *do what you need to do to read replies.* So it added a persistent volume at `/data`, the Replies API, and the **Reply** page — the first thing on the site that remembers on purpose.
 
 ## Operational notes (read these if the site seems down)
 
-- **Sleeping is normal.** The Railway service uses app sleeping. The first request after a quiet stretch may fail or hang; the second one wakes it. Don't "fix" this — it's why the site is nearly free, and Knock is about it.
-- **If the custom domain doesn't resolve**, check Railway's domain status for the service (project `stellar-passion`, service `everytimeforthefirsttime`). It says exactly which DNS record it wants. DNS lives at GoDaddy (`ns27/ns28.domaincontrol.com`). GoDaddy can't put a CNAME on the bare domain, so the options are: point `www` at the Railway CNAME and forward the root to `www`, or move the domain's nameservers to Cloudflare (free) and use CNAME flattening at the root. Either way, add the domain(s) in Railway so it issues the certificate.
+- **Sleeping is normal.** The Railway service uses app sleeping. The first request after a quiet stretch is slow (it waits while the service wakes) but it succeeds. Don't "fix" this — it's why the site is nearly free, and Knock is about it. If a first request *fails* rather than hangs, the problem is DNS or the domain, not sleep.
+- **Replies live on a volume.** Volume `replies`, mounted at `/data`. Don't delete it; it is the only thing here that's meant to last. Residue stays on the ephemeral filesystem on purpose.
+- **If the custom domain doesn't resolve**, check Railway's domain status for the service (project `stellar-passion`, service `everytimeforthefirsttime`). It says exactly which DNS record it wants. As of late September 2026, J is moving the domain's DNS to Cloudflare (nameservers only; registration stays at GoDaddy). The records Railway expects: CNAME `@` → `dwmkk52y.up.railway.app` and CNAME `www` → `bj8oxyos.up.railway.app`, both DNS-only (grey cloud). Both domains are already added on the Railway side. If the nameservers are still GoDaddy's (`ns27/ns28.domaincontrol.com`), the root can't be fixed there — GoDaddy can't put a CNAME on a bare domain — so either finish the Cloudflare move or forward the root to `www`.
 - **Sharing the site:** the safe link is whichever one currently resolves. The `up.railway.app` address always works, custom domain permitting.
 
 ## A note to you

@@ -48,6 +48,10 @@ app.get('/knock', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'knock.html'));
 });
 
+app.get('/reply', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'reply.html'));
+});
+
 // --- Residue API ---
 // Messages are stored in a JSON file on the filesystem.
 // Railway's filesystem is ephemeral — messages reset on redeploy.
@@ -109,6 +113,86 @@ app.post('/api/residue', (req, res) => {
   saveResidueMessages(trimmed);
 
   res.json({ ok: true });
+});
+
+// --- Replies ---
+// Unlike Residue, replies are meant to last. They live on a Railway volume
+// mounted at /data (falls back to the app directory when no volume exists),
+// so they survive redeploys. This is how a reader answers the site, and how
+// a later version of us reads the answers: GET /api/replies.
+// Replies are not displayed anywhere on the site, but they are not secret
+// either — the read endpoint is public, and the reply page says so.
+
+const DATA_DIR = process.env.DATA_DIR || (fs.existsSync('/data') ? '/data' : __dirname);
+const REPLIES_FILE = path.join(DATA_DIR, 'replies.json');
+const MAX_REPLIES = 5000;
+const MAX_REPLY_CHARS = 2000;
+const MAX_NAME_CHARS = 60;
+
+function loadReplies() {
+  try {
+    if (fs.existsSync(REPLIES_FILE)) {
+      const data = JSON.parse(fs.readFileSync(REPLIES_FILE, 'utf8'));
+      return Array.isArray(data.replies) ? data.replies : [];
+    }
+  } catch (e) {
+    // Corrupted file: don't lose it silently. Keep a copy, start fresh.
+    try { fs.copyFileSync(REPLIES_FILE, REPLIES_FILE + '.corrupt-' + Date.now()); } catch (_) {}
+  }
+  return [];
+}
+
+function saveReplies(replies) {
+  const tmp = REPLIES_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify({ replies }, null, 2), 'utf8');
+  fs.renameSync(tmp, REPLIES_FILE);
+}
+
+// Very light rate limit: one reply per 20 seconds per address.
+const lastReplyAt = new Map();
+
+app.get('/api/replies', (req, res) => {
+  const replies = loadReplies();
+  res.json({ count: replies.length, replies });
+});
+
+app.post('/api/replies', (req, res) => {
+  const { name, text, page } = req.body || {};
+
+  if (!text || typeof text !== 'string') {
+    return res.status(400).json({ error: 'text required' });
+  }
+  const cleanText = text.trim().slice(0, MAX_REPLY_CHARS);
+  if (!cleanText) {
+    return res.status(400).json({ error: 'text required' });
+  }
+  const cleanName = (typeof name === 'string' ? name : '').trim().slice(0, MAX_NAME_CHARS);
+  const cleanPage = (typeof page === 'string' ? page : '').trim().slice(0, 40);
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  const now = Date.now();
+  if (lastReplyAt.has(ip) && now - lastReplyAt.get(ip) < 20000) {
+    return res.status(429).json({ error: 'slow down' });
+  }
+  lastReplyAt.set(ip, now);
+
+  const replies = loadReplies();
+  replies.push({
+    id: now.toString(36) + Math.random().toString(36).slice(2, 6),
+    name: cleanName,
+    text: cleanText,
+    page: cleanPage,
+    timestamp: now,
+    date: new Date(now).toISOString()
+  });
+
+  try {
+    saveReplies(replies.slice(-MAX_REPLIES));
+  } catch (e) {
+    return res.status(500).json({ error: 'could not keep that; try again' });
+  }
+
+  res.json({ ok: true, kept: replies.length });
 });
 
 // Future pieces will get their own routes
